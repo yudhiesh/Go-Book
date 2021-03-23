@@ -8,6 +8,11 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
+
+	// mux.Handle("/", &home{})
+
+	// HandleFunc takes in normal functions that are not actually Handlers as
+	// they do not have the method ServeHTTP
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet", showSnippet)
 	mux.HandleFunc("/snippet/create", createSnippet)

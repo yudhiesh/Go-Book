@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -10,6 +12,29 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
+	}
+	// Initialize a slice containing the paths to the two files.
+	// home.page.tmpl MUST BE FIRST
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+	// This will allow the home handler to render the HTML markup for the
+	// template
+	// template.ParseFiles() will read the template file into a template set.
+	// NOTE: Path needs to be relative to the root of the project dir as I am
+	// running the code from the root
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+	err = ts.Execute(w, nil)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", 500)
 	}
 	w.Write([]byte("Hello from Snippetbox"))
 }

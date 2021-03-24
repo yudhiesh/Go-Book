@@ -15,6 +15,15 @@ type Config struct {
 	StaticDir string
 }
 
+// Define an application struct to hold the application-wide dependencies for
+// the web application.
+// These fields will be inherited by the handler methods that need the same
+// logger functionality passed to them
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+}
+
 func main() {
 	// Define a new command-line flag with the name 'addr', default value of
 	// 4000 for the port, and short explanation of the flag
@@ -43,18 +52,23 @@ func main() {
 	// file name and line number.
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+	}
+
 	mux := http.NewServeMux()
 
 	// HandleFunc takes in normal functions that are not actually Handlers as
 	// they do not have the method ServeHTTP
-	mux.HandleFunc("/", home)
+	mux.HandleFunc("/", app.home)
 	// NOTE: If you wanted to turn home into an actual handler you would need to
 	// instantiate an interface home and then turn the home function into a
 	// ServeHTTP method
 	// Then pass it by pointer as below:
 	// mux.Handle("/", &home{})
-	mux.HandleFunc("/snippet", showSnippet)
-	mux.HandleFunc("/snippet/create", createSnippet)
+	mux.HandleFunc("/snippet", app.showSnippet)
+	mux.HandleFunc("/snippet/create", app.createSnippet)
 
 	fileServer := http.FileServer(http.Dir(cfg.StaticDir))
 

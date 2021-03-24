@@ -4,9 +4,12 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
+// Configurations struct that stores all the flags that can be passed when
+// running the server
 type Config struct {
 	Addr      string
 	StaticDir string
@@ -21,9 +24,24 @@ func main() {
 	// This parses the command-line flag.
 	// This needs to be called before using the flag variables such as addr
 	cfg := new(Config)
+	// As the strings are stored in a struct we can access them using
+	// flag.StringVar() instead of flag.String()
+
 	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
+
 	flag.Parse()
+
+	// the destination to write the logs to (os.Stdout), a string
+	// prefix for message (INFO followed by a tab), and flags to indicate what
+	// additional information to include (local date and time). Note that the flags
+	// are joined using the bitwise OR operator |.
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+
+	// Creating a new logger with error information stderr as
+	// the destination and use the log.Lshortfile flag to include the relevant
+	// file name and line number.
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	mux := http.NewServeMux()
 
@@ -42,9 +60,20 @@ func main() {
 
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
-	log.Printf("Starting server on %s", cfg.Addr)
-	err := http.ListenAndServe(cfg.Addr, mux)
-	log.Fatal(err)
+	// Override the http.Server Error Log
+	// By default if Go's HTTP server encounters an error it will log it using
+	// the standard logger
+	// By initializing a new http.Server struct with the config settings of the
+	// current server we can override it to use the errorLog
+	srv := &http.Server{
+		Addr:     cfg.Addr,
+		ErrorLog: errorLog,
+		Handler:  mux,
+	}
+
+	infoLog.Printf("Starting server on %s", cfg.Addr)
+	err := srv.ListenAndServe()
+	errorLog.Fatal(err)
 }
 
 // Disable http.FileServer Directory Listings

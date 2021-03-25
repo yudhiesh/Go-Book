@@ -1,26 +1,31 @@
 package main
 
 import (
+	"database/sql" // New import
 	"flag"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql" // New import
 )
+
+// Declare the struct Configurations to be global to be used in other files
+var config Configurations
 
 // Configurations struct that stores all the flags that can be passed when
 // running the server
-var Cfg Configurations
-
 type Configurations struct {
 	Addr      string
 	StaticDir string
+	DSN       string
 }
 
-// Define an application struct to hold the application-wide dependencies for
-// the web application.
+// Define an Application struct to hold the Application-wide dependencies for
+// the web Application.
 // These fields will be inherited by the handler methods that need the same
 // logger functionality passed to them
-type application struct {
+type Application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
 }
@@ -36,9 +41,10 @@ func main() {
 	// cfg := new(Config)
 	// As the strings are stored in a struct we can access them using
 	// flag.StringVar() instead of flag.String()
-	cfg := Configurations{}
+	cfg := new(Configurations)
 	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
+	flag.StringVar(&cfg.DSN, "dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 
 	flag.Parse()
 
@@ -53,7 +59,16 @@ func main() {
 	// file name and line number.
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	app := &application{
+	// Connect to the DB
+	db, err := openDB(cfg.DSN)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// Close the connection pool is closed before the main() function exits
+	defer db.Close()
+
+	app := &Application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
 	}
@@ -70,6 +85,21 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", cfg.Addr)
-	err := srv.ListenAndServe()
+	// Instead of declaring and assigning the err we redeclare it using the =
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
+}
+
+// Returns a sql.DB connection pool for a given DSN
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	// Connections are established lazily as and when needed for the first time
+	// db.Ping creates a connection and we check that there isn't any errors
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }

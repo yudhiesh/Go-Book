@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (app *application) routes() *http.ServeMux {
+func (app *Application) routes() *http.ServeMux {
 
 	mux := http.NewServeMux()
 
@@ -20,7 +20,7 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/snippet", app.showSnippet)
 	mux.HandleFunc("/snippet/create", app.createSnippet)
 
-	fileServer := http.FileServer(http.Dir(Cfg.StaticDir))
+	fileServer := http.FileServer(http.Dir(config.StaticDir))
 
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 

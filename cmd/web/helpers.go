@@ -7,7 +7,7 @@ import (
 )
 
 // Writes an error message and stack trace to the errorLog
-func (app *application) serverError(w http.ResponseWriter, err error) {
+func (app *Application) serverError(w http.ResponseWriter, err error) {
 	// debug.Stack() is used to get a stack trace for the current goroutine and
 	// append it to log message
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
@@ -21,11 +21,11 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 }
 
 // Sends a specific status code and corresponding description to the user
-func (app *application) clientError(w http.ResponseWriter, status int) {
+func (app *Application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
 // Convenience wrapper for sending a 404 Not Found response to the user
-func (app *application) notFound(w http.ResponseWriter) {
+func (app *Application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }

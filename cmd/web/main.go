@@ -48,6 +48,7 @@ func main() {
 	cfg := new(Configurations)
 	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
+	// parseTime=true to force conversion of TIME and DATE to time
 	flag.StringVar(&cfg.DSN, "dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 
 	flag.Parse()

@@ -1,13 +1,15 @@
 package main
 
 import (
-	"database/sql" // New import
+	"database/sql"
 	"flag"
 	"log"
 	"net/http"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql" // New import
+	"yudhiesh/snippetbox/pkg/models/mysql"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // Declare the struct Configurations to be global to be used in other files
@@ -28,6 +30,8 @@ type Configurations struct {
 type Application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	// Makes the SnippetModel object to be available to the handlers
+	snippets *mysql.SnippetModel
 }
 
 func main() {
@@ -65,12 +69,13 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
-	// Close the connection pool is closed before the main() function exits
+	// Closes the connection pool before the main function finishes
 	defer db.Close()
 
 	app := &Application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		snippets: &mysql.SnippetModel{DB: db},
 	}
 
 	// Override the http.Server Error Log

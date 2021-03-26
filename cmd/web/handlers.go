@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 	"yudhiesh/snippetbox/pkg/models"
@@ -14,28 +13,36 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	s, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, err)
+	}
+	for _, snippet := range s {
+		fmt.Fprintf(w, "%v\n", snippet)
+	}
+
 	// Initialize a slice containing the paths to the two files.
 	// home.page.tmpl MUST BE FIRST
-	files := []string{
-		"./ui/html/home.page.tmpl",
-		"./ui/html/base.layout.tmpl",
-		"./ui/html/footer.partial.tmpl",
-	}
+	// files := []string{
+	// 	"./ui/html/home.page.tmpl",
+	// 	"./ui/html/base.layout.tmpl",
+	// 	"./ui/html/footer.partial.tmpl",
+	// }
 	// This will allow the home handler to render the HTML markup for the
 	// template
 	// template.ParseFiles() will read the template file into a template set.
 	// NOTE: Path needs to be relative to the root of the project dir as I am
 	// running the code from the root
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-	err = ts.Execute(w, nil)
-	if err != nil {
-		app.serverError(w, err)
-	}
-	w.Write([]byte("Hello from Snippetbox"))
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+	// err = ts.Execute(w, nil)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// }
+	// w.Write([]byte("Hello from Snippetbox"))
 }
 
 func (app *Application) showSnippet(w http.ResponseWriter, r *http.Request) {

@@ -11,39 +11,37 @@ import (
 
 func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
+
 	s, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
-	}
-	for _, snippet := range s {
-		fmt.Fprintf(w, "%v\n", snippet)
+		return
 	}
 
-	// Initialize a slice containing the paths to the two files.
-	// home.page.tmpl MUST BE FIRST
-	// files := []string{
-	// 	"./ui/html/home.page.tmpl",
-	// 	"./ui/html/base.layout.tmpl",
-	// 	"./ui/html/footer.partial.tmpl",
-	// }
-	// This will allow the home handler to render the HTML markup for the
-	// template
-	// template.ParseFiles() will read the template file into a template set.
-	// NOTE: Path needs to be relative to the root of the project dir as I am
-	// running the code from the root
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
-	// err = ts.Execute(w, nil)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// }
-	// w.Write([]byte("Hello from Snippetbox"))
+	// Create an instance of a templateData struct holding the slice of
+	// snippets.
+	data := &templateData{Snippets: s}
+
+	files := []string{
+		"./ui/html/home.page.tmpl",
+		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// Pass in the templateData struct when executing the template.
+	err = ts.Execute(w, data)
+	if err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *Application) showSnippet(w http.ResponseWriter, r *http.Request) {

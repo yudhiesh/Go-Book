@@ -1,9 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
+
+func (app *Application) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Create a defered function which will always be run in the event of a
+		// panic as Go unwinds the stack
+		defer func() {
+			// Use the builtin recover() to check if there has been a panic or
+			// not
+			if err := recover(); err != nil {
+				// If there is a panic then close the connection
+				w.Header().Set("Connection", "close")
+				// Return a 500 Internal Server response
+				// Normalize the error to create a new error object containing
+				// the defautl textual representation of the interface{}
+				app.serverError(w, fmt.Errorf("%s", err))
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
 
 // Adds two headers: X-Frame-Options: deny and X-XSS-Protection: 1; mode=block
 // to every response

@@ -8,6 +8,8 @@ import (
 	"yudhiesh/snippetbox/pkg/models"
 )
 
+// recoverPanic <-> logRequest <-> secureHeaders <-> servemux <-> application handler
+
 func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	s, err := app.snippets.Latest()
 	if err != nil {
@@ -60,5 +62,5 @@ func (app *Application) createSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	return
+	app.render(w, r, "create.page.tmpl", nil)
 }

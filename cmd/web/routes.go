@@ -9,6 +9,7 @@ import (
 
 func (app *Application) routes() http.Handler {
 
+	// recoverPanic <-> logRequest <-> secureHeaders <-> servemux <-> application handler
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
 	mux := pat.New()
@@ -24,6 +25,5 @@ func (app *Application) routes() http.Handler {
 	// the corresponding handler
 	mux.Get("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
-	// recoverPanic <-> logRequest <-> secureHeaders <-> servemux <-> application handler
 	return standardMiddleware.Then(mux)
 }

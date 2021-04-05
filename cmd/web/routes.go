@@ -23,7 +23,6 @@ func (app *Application) routes() http.Handler {
 
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
-	// Wrap the servemux with the middleware function to apply it to every
-	// request
-	return secureHeaders(mux)
+	// logRequest <-> secureHeaders <-> servemux <-> application handler
+	return app.logRequest(secureHeaders(mux))
 }

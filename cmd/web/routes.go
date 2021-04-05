@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
-	"strings"
 )
 
-func (app *Application) routes() *http.ServeMux {
+func (app *Application) routes() http.Handler {
 
 	mux := http.NewServeMux()
 
@@ -24,18 +23,7 @@ func (app *Application) routes() *http.ServeMux {
 
 	mux.Handle("/static/", http.StripPrefix("/static", neuter(fileServer)))
 
-	return mux
-}
-
-// Disable http.FileServer Directory Listings
-// NOTE: Prevent navigable directory listings and disable it all together
-func neuter(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/") {
-			http.NotFound(w, r)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
+	// Wrap the servemux with the middleware function to apply it to every
+	// request
+	return secureHeaders(mux)
 }

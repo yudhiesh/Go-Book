@@ -14,6 +14,7 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+// Insert a user into the users table
 func (u *UserModel) Insert(name, email, password string) error {
 	tx, err := u.DB.Begin()
 	if err != nil {
@@ -41,8 +42,45 @@ func (u *UserModel) Insert(name, email, password string) error {
 	return err
 }
 
+// Authenticate the users email and password
 func (u *UserModel) Authenticate(email, password string) (int, error) {
-	return 0, nil
+	tx, err := u.DB.Begin()
+	if err != nil {
+		return 0, nil
+	}
+	// Retrieve the id and hashedPassword from the email
+	// If no matching email exists, or the user is not active, we return the
+	// ErrInvalidCredentials
+	var id int
+	var hashedPassword []byte
+	stmt := `SELECT id, hashed_password FROM users WHERE email = ? AND active = true`
+	row := tx.QueryRow(stmt, email)
+	err = row.Scan(&id, &hashedPassword)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			tx.Rollback()
+			return 0, models.ErrInvalidCredentials
+		} else {
+			tx.Rollback()
+			return 0, err
+		}
+	}
+
+	// Check whether the hashed password and password match
+	// If they do not then return ErrInvalidCredentials
+	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			tx.Rollback()
+			return 0, models.ErrInvalidCredentials
+		} else {
+			tx.Rollback()
+			return 0, nil
+		}
+	}
+
+	err = tx.Commit()
+	return id, err
 }
 
 func (u *UserModel) Get(id int) (*models.User, error) {

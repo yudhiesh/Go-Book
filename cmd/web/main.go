@@ -114,6 +114,13 @@ func main() {
 		ErrorLog:  errorLog,
 		Handler:   app.routes(),
 		TLSConfig: tlsConfig,
+		// keep-alives last a minute instead of 3 minutes
+		IdleTimeout: time.Minute,
+		// Short ReadTimeout prevents SLowloris attacks
+		ReadTimeout: 5 * time.Second,
+		// Prevent the data that the handler returns from taking too long to
+		// write
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Starting server on %s", cfg.Addr)

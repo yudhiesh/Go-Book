@@ -12,12 +12,16 @@ func (app *Application) routes() http.Handler {
 	// recoverPanic <-> logRequest <-> secureHeaders <-> servemux <-> application handler
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
+	// This middleware loads and saves session data to and from the session
+	// cookie with every HTTP request and response as appropriate
+	dynamicMiddleware := alice.New(app.session.Enable)
+
 	mux := pat.New()
 	// Order matters here as the "/snippet/create" is valid for GET and POST
-	mux.Get("/", http.HandlerFunc(app.home))
-	mux.Get("/snippet/create", http.HandlerFunc(app.createSnippetForm))
-	mux.Post("/snippet/create", http.HandlerFunc(app.createSnippet))
-	mux.Get("/snippet/:id", http.HandlerFunc(app.showSnippet))
+	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
+	mux.Get("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippetForm))
+	mux.Post("/snippet/create", dynamicMiddleware.ThenFunc(app.createSnippet))
+	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(app.showSnippet))
 
 	fileServer := http.FileServer(http.Dir(config.StaticDir))
 

@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"yudhiesh/snippetbox/pkg/models/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golangcollege/sessions"
 )
 
 // Declare the struct Configurations to be global to be used in other files
@@ -29,19 +31,14 @@ type Configurations struct {
 // These fields will be inherited by the handler methods that need the same
 // logger functionality passed to them
 type Application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	// Makes the SnippetModel object to be available to the handlers
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	session       *sessions.Session
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
 }
 
 func main() {
-	// Define a new command-line flag with the name 'addr', default value of
-	// 4000 for the port, and short explanation of the flag
-	// Converts whatever value you pass into a string
-	// addr := flag.String("addr", ":4000", "HTTP network address")
-
 	// This parses the command-line flag.
 	// This needs to be called before using the flag variables such as addr
 	// cfg := new(Config)
@@ -52,6 +49,9 @@ func main() {
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
 	// parseTime=true to force conversion of TIME and DATE to time
 	flag.StringVar(&cfg.DSN, "dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
+	// New flag for the session secret the key is used to encrypt and
+	// authenticate session cookies
+	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
 
 	flag.Parse()
 
@@ -80,9 +80,15 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// Initialize a new session manager with the secret key
+	// It is configured to always expires after 12 hours
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	app := &Application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
+		session:       session,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
 	}

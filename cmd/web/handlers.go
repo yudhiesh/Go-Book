@@ -73,6 +73,9 @@ func (app *Application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+	// Adds the string value "Snippet successfully created" with the key "flash"
+	// to the session data
+	app.session.Put(r, "flash", "Snippet successfully created!")
 
 	// Redirect the user to the relevant page for the snippet.
 	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)

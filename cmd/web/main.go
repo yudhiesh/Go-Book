@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -94,15 +95,25 @@ func main() {
 		templateCache: templateCache,
 	}
 
+	// tls.Config struct holds the non-default TLS setting we want the server to
+	// use
+	tlsConfig := &tls.Config{
+		// uses Go's favored cipher suites or the users preferred cipher suite
+		// which will probably have a stronger cipher suite
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	// Override the http.Server Error Log
 	// By default if Go's HTTP server encounters an error it will log it using
 	// the standard logger
 	// By initializing a new http.Server struct with the config settings of the
 	// current server we can override it to use the errorLog
 	srv := &http.Server{
-		Addr:     cfg.Addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(),
+		Addr:      cfg.Addr,
+		ErrorLog:  errorLog,
+		Handler:   app.routes(),
+		TLSConfig: tlsConfig,
 	}
 
 	infoLog.Printf("Starting server on %s", cfg.Addr)

@@ -84,6 +84,7 @@ func main() {
 	// It is configured to always expires after 12 hours
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
+	session.Secure = true
 
 	app := &Application{
 		errorLog:      errorLog,
@@ -105,8 +106,8 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", cfg.Addr)
-	// Instead of declaring and assigning the err we redeclare it using the =
-	err = srv.ListenAndServe()
+	// ListenAndServeTLS() is used to start the HTTPS server
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
 

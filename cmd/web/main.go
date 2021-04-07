@@ -16,17 +16,6 @@ import (
 	"github.com/golangcollege/sessions"
 )
 
-// Declare the struct Configurations to be global to be used in other files
-var config Configurations
-
-// Configurations struct that stores all the flags that can be passed when
-// running the server
-type Configurations struct {
-	Addr      string
-	StaticDir string
-	DSN       string
-}
-
 // Define an Application struct to hold the Application-wide dependencies for
 // the web Application.
 // These fields will be inherited by the handler methods that need the same
@@ -43,17 +32,10 @@ type Application struct {
 func main() {
 	// This parses the command-line flag.
 	// This needs to be called before using the flag variables such as addr
-	// cfg := new(Config)
-	// As the strings are stored in a struct we can access them using
-	// flag.StringVar() instead of flag.String()
-	cfg := new(Configurations)
-	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
-	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
-	// parseTime=true to force conversion of TIME and DATE to time
-	flag.StringVar(&cfg.DSN, "dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
-	// New flag for the session secret the key is used to encrypt and
-	// authenticate session cookies
+	addr := flag.String("addr", ":4000", "HTTP network address")
+	dsn := flag.String("dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
+	flag.Parse()
 
 	flag.Parse()
 
@@ -69,7 +51,7 @@ func main() {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// Connect to the DB
-	db, err := openDB(cfg.DSN)
+	db, err := openDB(*dsn)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -112,7 +94,7 @@ func main() {
 	// By initializing a new http.Server struct with the config settings of the
 	// current server we can override it to use the errorLog
 	srv := &http.Server{
-		Addr:      cfg.Addr,
+		Addr:      *addr,
 		ErrorLog:  errorLog,
 		Handler:   app.routes(),
 		TLSConfig: tlsConfig,
@@ -125,7 +107,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", cfg.Addr)
+	infoLog.Printf("Starting server on %s", *addr)
 	// ListenAndServeTLS() is used to start the HTTPS server
 	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)

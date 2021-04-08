@@ -15,8 +15,8 @@ type UserModel struct {
 }
 
 // Insert a user into the users table
-func (u *UserModel) Insert(name, email, password string) error {
-	tx, err := u.DB.Begin()
+func (m *UserModel) Insert(name, email, password string) error {
+	tx, err := m.DB.Begin()
 	if err != nil {
 		return err
 	}
@@ -43,8 +43,8 @@ func (u *UserModel) Insert(name, email, password string) error {
 }
 
 // Authenticate the users email and password
-func (u *UserModel) Authenticate(email, password string) (int, error) {
-	tx, err := u.DB.Begin()
+func (m *UserModel) Authenticate(email, password string) (int, error) {
+	tx, err := m.DB.Begin()
 	if err != nil {
 		return 0, nil
 	}
@@ -83,6 +83,20 @@ func (u *UserModel) Authenticate(email, password string) (int, error) {
 	return id, err
 }
 
-func (u *UserModel) Get(id int) (*models.User, error) {
-	return nil, nil
+func (m *UserModel) Get(id int) (*models.User, error) {
+	u := &models.User{}
+
+	stmt := `SELECT id, name, email, created, active FROM users WHERE id = ?`
+
+	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Name, &u.Email, &u.Created, &u.Active)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+
+	return u, nil
 }

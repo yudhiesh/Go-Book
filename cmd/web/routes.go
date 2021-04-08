@@ -15,7 +15,7 @@ func (app *Application) routes() http.Handler {
 	// This middleware loads and saves session data to and from the session
 	// cookie with every HTTP request and response as appropriate
 	// Does not need to be applied to every route such as the /static/ route
-	dynamicMiddleware := alice.New(app.session.Enable, noSurf)
+	dynamicMiddleware := alice.New(app.session.Enable, noSurf, app.authenticate)
 
 	mux := pat.New()
 	// Order matters here as the "/snippet/create" is valid for GET and POST

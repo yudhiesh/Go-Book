@@ -16,6 +16,12 @@ import (
 	"github.com/golangcollege/sessions"
 )
 
+// Custom context key
+type contextKey string
+
+// Context key is authenticated variable
+const contextKeyIsAuthenticated = contextKey("isAuthenticated")
+
 // Define an Application struct to hold the Application-wide dependencies for
 // the web Application.
 // These fields will be inherited by the handler methods that need the same
@@ -35,7 +41,6 @@ func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
-	flag.Parse()
 
 	flag.Parse()
 

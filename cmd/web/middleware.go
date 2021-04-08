@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"yudhiesh/snippetbox/pkg/models"
 
 	"github.com/justinas/nosurf"
 )
@@ -88,4 +91,41 @@ func noSurf(next http.Handler) http.Handler {
 		Secure:   true,
 	})
 	return csrfHandler
+}
+
+// Authenticates the user middleware
+// When the user is not authenticated and not active pass the unchanged request
+// to the next handler in the chain.
+// When the user is authenticated and active, create a copy of the request with
+// a contextIsAuthenticated key and true value stored in the request context.
+// Then pass this copy of the context to the request.
+func (app *Application) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if the authenticated user ID value exists in the session
+		// If there isn't one then just continue the chain as normal
+		exists := app.session.Exists(r, "authenticatedUserID")
+		if !exists {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Fetch the details from the current user in the database
+		// If not matching record or the user is not active(deactivated their
+		// account) then remove the authenticatedID value from their session
+		user, err := app.users.Get(app.session.GetInt(r, "authenticatedUserID"))
+		if errors.Is(err, models.ErrNoRecord) || !user.Active {
+			app.session.Remove(r, "authenticatedUserID")
+			next.ServeHTTP(w, r)
+			return
+		} else if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		// Otherwise we know the user is authenticated and active
+		// So we add in the contextIsAuthenticated value of true to the context
+		// to a copy of the request
+		ctx := context.WithValue(r.Context(), contextKeyIsAuthenticated, true)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

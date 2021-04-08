@@ -25,7 +25,12 @@ type templateData struct {
 
 // Returns a human readable formatted string of the time.Time object
 func humanDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
+	// Check if the time is the zero time instant, January 1, year 1, 00:00:00 UTC.
+	if t.IsZero() {
+		return ""
+	}
+	// Convert the time to UTC before formatting it
+	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
 // Initialize a template.FuncMap object and store it in a global variable

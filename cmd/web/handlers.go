@@ -168,3 +168,8 @@ func (app *Application) logoutUser(w http.ResponseWriter, r *http.Request) {
 	app.session.Put(r, "flash", "You've been logged out successfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
+// Ping handler which simply returns a 200 OK response
+func ping(w http.ResponseWriter, h *http.Request) {
+	w.Write([]byte("OK"))
+}

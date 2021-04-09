@@ -23,27 +23,30 @@ type contextKey string
 // Context key is authenticated variable
 const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 
+// Make snippets and user take in generic types/interfaces instead of concrete types of
+// *mysql.SnippetMode and *mysql.UserModel
+type snippets interface {
+	Insert(string, string, string) (int, error)
+	Get(int) (*models.Snippet, error)
+	Latest() ([]*models.Snippet, error)
+}
+type users interface {
+	Insert(string, string, string) error
+	Authenticate(string, string) (int, error)
+	Get(int) (*models.User, error)
+}
+
 // Define an Application struct to hold the Application-wide dependencies for
 // the web Application.
 // These fields will be inherited by the handler methods that need the same
 // logger functionality passed to them
 type Application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	session  *sessions.Session
-	// Make snippets and user take in generic types/interfaces instead of concrete types of
-	// *mysql.SnippetMode and *mysql.UserModel
-	snippets interface {
-		Insert(string, string, string) (int, error)
-		Get(int) (*models.Snippet, error)
-		Latest() ([]*models.Snippet, error)
-	}
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	session       *sessions.Session
+	snippets      snippets
 	templateCache map[string]*template.Template
-	users         interface {
-		Insert(string, string, string) error
-		Authenticate(string, string) (int, error)
-		Get(int) (*models.User, error)
-	}
+	users         users
 }
 
 func main() {

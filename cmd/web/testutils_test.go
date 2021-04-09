@@ -1,11 +1,14 @@
 package main
 
 import (
+	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"testing"
 	"time"
 	"yudhiesh/snippetbox/pkg/models/mock"
@@ -76,5 +79,45 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, []byt
 	if err != nil {
 		t.Fatal(err)
 	}
+	return rs.StatusCode, rs.Header, body
+}
+
+// Regex to capture the CSRF token value from the HTML for our user signup page
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
+
+func extractCSRFToken(t *testing.T, body []byte) string {
+	// Use the FindSubmatch method to extract the token from the HTML body
+	// NOTE: this returns an array with the entire matched pattern in the
+	// first position, and the values of any captured data in the subsequent
+	// positions
+
+	matches := csrfTokenRX.FindSubmatch(body)
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in the body")
+	}
+	// CSRF token is base64 encoded string it potentially includes the +
+	// character and this will be escaped to &#43;
+	// After extracting it you need to use html.UnescapeString() to get the
+	// original token
+	return html.UnescapeString(string(matches[1]))
+}
+
+// Create a postForm method for sending a POST request to the test server
+// form is a url.Values object which can contain any data that you want to send
+// in the request body
+func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, []byte) {
+	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read the response body.
+	defer rs.Body.Close()
+	body, err := ioutil.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Return the response status, headers and body.
 	return rs.StatusCode, rs.Header, body
 }

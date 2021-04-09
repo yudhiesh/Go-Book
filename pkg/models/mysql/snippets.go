@@ -88,7 +88,7 @@ func (m *SnippetModel) Latest() ([]*models.Snippet, error) {
 		return nil, err
 	}
 	stmt := `SELECT id, title, content, created, expires FROM snippets
-	WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 5`
+	WHERE expires > UTC_TIMESTAMP() ORDER BY created DESC LIMIT 10`
 	rows, err := tx.Query(stmt)
 	if err != nil {
 		tx.Rollback()

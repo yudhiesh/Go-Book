@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"yudhiesh/snippetbox/pkg/models"
 	"yudhiesh/snippetbox/pkg/models/mysql"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -27,12 +28,22 @@ const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 // These fields will be inherited by the handler methods that need the same
 // logger functionality passed to them
 type Application struct {
-	errorLog      *log.Logger
-	infoLog       *log.Logger
-	session       *sessions.Session
-	snippets      *mysql.SnippetModel
+	errorLog *log.Logger
+	infoLog  *log.Logger
+	session  *sessions.Session
+	// Make snippets and user take in generic types/interfaces instead of concrete types of
+	// *mysql.SnippetMode and *mysql.UserModel
+	snippets interface {
+		Insert(string, string, string) (int, error)
+		Get(int) (*models.Snippet, error)
+		Latest() ([]*models.Snippet, error)
+	}
 	templateCache map[string]*template.Template
-	users         *mysql.UserModel
+	users         interface {
+		Insert(string, string, string) error
+		Authenticate(string, string) (int, error)
+		Get(int) (*models.User, error)
+	}
 }
 
 func main() {

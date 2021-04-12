@@ -22,6 +22,7 @@ func (app *Application) routes() http.Handler {
 	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
 	// Add requireAuthentication middlewarte to the routes that require it
 	mux.Get("/about", dynamicMiddleware.ThenFunc(app.about))
+	mux.Get("/user/profile", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.profile))
 	mux.Get("/snippet/create", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.createSnippetForm))
 	mux.Post("/snippet/create", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.createSnippet))
 	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(app.showSnippet))

@@ -171,3 +171,8 @@ func (app *Application) logoutUser(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, h *http.Request) {
 	w.Write([]byte("OK"))
 }
+
+// Render the about page
+func (app *Application) about(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "about.page.tmpl", nil)
+}

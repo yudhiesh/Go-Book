@@ -34,6 +34,7 @@ type users interface {
 	Insert(string, string, string) error
 	Authenticate(string, string) (int, error)
 	Get(int) (*models.User, error)
+	ChangePassword(int, string, string) error
 }
 
 // Define an Application struct to hold the Application-wide dependencies for

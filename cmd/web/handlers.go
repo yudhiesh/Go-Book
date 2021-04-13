@@ -206,13 +206,18 @@ func (app *Application) changePassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// // User ID
-	// userID := app.session.GetInt(r, "authenticatedUserID")
-	// _, err = app.users.Get(userID)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
+	userID := app.session.GetInt(r, "authenticatedUserID")
+	err = app.users.ChangePassword(userID, form.Get("currentPassword"), form.Get("newPassword"))
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.Errors.Add("currentPassword", "Current password is correct")
+			app.render(w, r, "password.page.tmpl", &templateData{Form: form})
+		} else {
+			app.serverError(w, err)
+		}
+	}
+	app.session.Put(r, "flash", "Password successfully changed")
+	http.Redirect(w, r, "/user/profile", http.StatusSeeOther)
 
 }
 

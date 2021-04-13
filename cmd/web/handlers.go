@@ -154,6 +154,13 @@ func (app *Application) loginUser(w http.ResponseWriter, r *http.Request) {
 	// logged in
 	app.session.Put(r, "authenticatedUserID", id)
 
+	// Check if the redirectPathAfterLogin value exist
+	url := app.session.PopString(r, "redirectPathAfterLogin")
+	if url != "" {
+		// Redirect to the last seen user page
+		http.Redirect(w, r, url, http.StatusSeeOther)
+		return
+	}
 	// Redirect the user to the create snippet page
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 

@@ -188,12 +188,6 @@ func (app *Application) profile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) changePassword(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "password.page.tmpl", &templateData{
-		Form: forms.New(nil),
-	})
-}
-
-func (app *Application) changePasswordForm(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
@@ -201,20 +195,29 @@ func (app *Application) changePasswordForm(w http.ResponseWriter, r *http.Reques
 	form := forms.New(r.PostForm)
 	form.Required("currentPassword", "newPassword", "newPasswordConfirmation")
 	form.MinLength("currentPassword", 10)
-	form.MinLength("newPassword", 10)
-	form.MinLength("newPasswordConfirmation", 10)
+
+	if form.Get("newPassword") != form.Get("newPasswordConfirmation") {
+		form.Errors.Add("newPasswordConfirmation", "Passwords do not match")
+	}
+
 	if !form.Valid() {
 		app.render(w, r, "password.page.tmpl", &templateData{
 			Form: form,
 		})
 		return
 	}
-	// User ID
-	userID := app.session.GetInt(r, "authenticatedUserID")
-	user, err := app.users.Get(userID)
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
+	// // User ID
+	// userID := app.session.GetInt(r, "authenticatedUserID")
+	// _, err = app.users.Get(userID)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
 
+}
+
+func (app *Application) changePasswordForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "password.page.tmpl", &templateData{
+		Form: forms.New(nil),
+	})
 }

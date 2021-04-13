@@ -48,6 +48,7 @@ type Application struct {
 	snippets      snippets
 	templateCache map[string]*template.Template
 	users         users
+	debug         bool
 }
 
 func main() {
@@ -56,6 +57,7 @@ func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "web:password@/snippetbox?parseTime=true", "MySQL data source name")
 	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret key")
+	debug := flag.Bool("debug", false, "Enable debug mode")
 
 	flag.Parse()
 
@@ -97,6 +99,7 @@ func main() {
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
 		users:         &mysql.UserModel{DB: db},
+		debug:         *debug,
 	}
 
 	// tls.Config struct holds the non-default TLS setting we want the server to

@@ -21,7 +21,12 @@ func (app *Application) serverError(w http.ResponseWriter, err error) {
 	// http.StatusText() returns a human-readable format string of the http
 	// server error
 	// http.StatusText(400) → "Bad Request"
+	if app.debug {
+		http.Error(w, trace, http.StatusInternalServerError)
+		return
+	}
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
 }
 
 // Sends a specific status code and corresponding description to the user
